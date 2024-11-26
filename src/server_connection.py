@@ -1,3 +1,4 @@
+import os
 import requests
 import uuid
 from const.server_data import BASE_URL, ENDPOINT
@@ -5,10 +6,9 @@ from const.server_data import BASE_URL, ENDPOINT
 
 def get_cell_centers():
     try:
-        
         # Define the request headers
         HEADERS = {
-            "Authorization": "Bearer deiwofhiwuefhuweyrgfuq3e2gb3uqerdewqgrerqger",
+            "Authorization": f"Bearer {os.environ['HOST_SERVER_AUTH_KEY']}",
             "Content-Type": "application/json"
         }
 
