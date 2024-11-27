@@ -1,10 +1,15 @@
+import csv
+import json
 import os
+import time
+from typing import Tuple
 import requests
-import uuid
+from supabase import create_client
+from const.general import RESULTS_FOLDER
+from const.h3 import AMOUNT_OF_HEXAGONS
 from const.server_data import BASE_URL, ENDPOINT
 
-
-def get_cell_centers():
+def get_cell_centers(ms_id: str) -> dict[str, Tuple[float, float]]:
     try:
         # Define the request headers
         HEADERS = {
@@ -14,8 +19,8 @@ def get_cell_centers():
 
         # Define the query parameters
         PARAMS = {
-            "ms_id": str(uuid.uuid4()),
-            "amount_of_hexagons": 15
+            "ms_id": ms_id,
+            "amount_of_hexagons": AMOUNT_OF_HEXAGONS
         }
 
         # Send the GET request
@@ -24,7 +29,7 @@ def get_cell_centers():
         # Handle the response
         if response.status_code == 200:
             # Successfully retrieved hexagons
-            return response.json().get("hexagons")
+            return { id: (cell_center[0], cell_center[1]) for id, cell_center in response.json().get("hexagons").items() }
         else:
             # Print the error details
             print(f"Failed to fetch hexagons. Status code: {response.status_code}")
@@ -33,3 +38,76 @@ def get_cell_centers():
     
     except Exception as e:
         return []
+    
+def save_scraped_locations():
+    
+    # Get all file names
+    filenames = os.listdir(RESULTS_FOLDER)
+    
+    # Filter only csv file names
+    csv_files = [ filename for filename in filenames if filename.endswith( ".csv" ) ]
+    
+    # Dict to hold all locations
+    # using a dict ensures that we store unique locations
+    all_locations = {}
+    
+    # Loop over all csv files
+    for csv_path in csv_files:
+        # Get csv data
+        data = list(csv.DictReader(open(f'{RESULTS_FOLDER}/{csv_path}')))
+        if not data:
+            raise Exception(f'No data in {csv_path}')
+
+        # Loop over all locations
+        for row in data:
+            # Set id for compatibility with frontend
+            row['id'] = row['cid']
+            
+            # remove cid
+            del row['cid']
+            
+            # remove input_id as it is not required
+            del row['input_id']
+
+            # Convert all nested objects to valid json
+            row['menu'] = json.loads(row['menu'])
+            row['about'] = json.loads(row['about'])
+            row['owner'] = json.loads(row['owner'])
+            row['images'] = json.loads(row['images'])
+            row['open_hours'] = json.loads(row['open_hours'])
+            row['order_online'] = json.loads(row['order_online'])
+            row['user_reviews'] = json.loads(row['user_reviews'])
+            row['popular_times'] = json.loads(row['popular_times'])
+            row['complete_address'] = json.loads(row['complete_address'])
+            row['reviews_per_rating'] = json.loads(row['reviews_per_rating'])
+            
+            # Add data to all_locations
+            all_locations[row['id']] = row
+    
+    dataToBeUpserted = [{"type": "scraped_gmaps", "id_external": loc_id, "metadata": loc_data} for loc_id, loc_data in all_locations.items()]
+
+    [print(d['metadata']['title']) for d in dataToBeUpserted]
+
+    spClient = create_client(os.environ['SUPABASE_PROJECT_URL'] , os.environ['SUPABASE_PROJECT_KEY'])
+    # Upsert parsed locations with a conflict on id_external so same locations can be ignored
+    try:
+        spClient.from_('locations').upsert(
+            dataToBeUpserted, 
+            on_conflict="id_external"
+        ).execute()
+    except Exception as e:
+        # On exception, we ignore the csv so the process can continue and the microservice is not blocked
+        #! This behaviour may need to be discussed
+        print(e)
+
+
+def update_scraper_status(ms_id: str, cell_id: str, status: str):
+    try:
+        spClient = create_client(os.environ['SUPABASE_PROJECT_URL'] , os.environ['SUPABASE_PROJECT_KEY'])
+        spClient.schema('host_scraper').from_('logs').insert({"id_ms": ms_id, "id_cell": cell_id, "status": status}).execute()
+    except Exception as e:
+        print(e)
+
+# initiated
+# scraping
+# done - error
