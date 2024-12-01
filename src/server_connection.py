@@ -23,8 +23,8 @@ def get_cell_centers(ms_id: str) -> dict[str, Tuple[float, float]]:
             "amount_of_hexagons": AMOUNT_OF_HEXAGONS
         }
 
-        # Send the GET request
-        response = requests.get(f"{BASE_URL}{ENDPOINT}", headers=HEADERS, params=PARAMS)
+        # Send he GET request
+        response = requests.get(f"{os.environ['HOST_SERVER_URL']}{ENDPOINT}", headers=HEADERS, params=PARAMS)
 
         # Handle the response
         if response.status_code == 200:
@@ -34,10 +34,10 @@ def get_cell_centers(ms_id: str) -> dict[str, Tuple[float, float]]:
             # Print the error details
             print(f"Failed to fetch hexagons. Status code: {response.status_code}")
             print("Response:", response.json())
-            return []
+            return {}
     
     except Exception as e:
-        return []
+        return {}
     
 def save_scraped_locations():
     
@@ -85,6 +85,9 @@ def save_scraped_locations():
             all_locations[row['id']] = row
     
     dataToBeUpserted = [{"type": "scraped_gmaps", "id_external": loc_id, "metadata": loc_data} for loc_id, loc_data in all_locations.items()]
+
+    if not dataToBeUpserted:
+        return
 
     [print(d['metadata']['title']) for d in dataToBeUpserted]
 
