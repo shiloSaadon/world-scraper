@@ -1,15 +1,25 @@
 #!/bin/bash
 
-sudo apt-get update
+export DEBIAN_FRONTEND=noninteractive
 
-sudo apt-get install pipx -y
+sudo -E apt-get update
+sudo -E apt-get install -y \
+    python3-poetry \
+    nodejs \
+    npm \
+    -o Dpkg::Options::="--force-confnew"
 
-pipx install poetry
-pipx ensurepath
 export PATH="/home/ubuntu/.local/bin:$PATH"
+
+node -v
+npm -v
+npx -v
+
+sudo npx --yes playwright install-deps
 
 cd world-scraper
 
-poetry shell
-poetry install
-poetry run python3 src/main.py
+sudo chmod +x ./src/google_maps_scraper_linux
+
+sudo poetry install
+sudo poetry run python3 src/main.py

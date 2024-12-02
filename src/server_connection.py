@@ -1,7 +1,6 @@
 import csv
 import json
 import os
-import time
 from typing import Tuple
 import requests
 from supabase import create_client

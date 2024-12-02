@@ -20,7 +20,8 @@ def run_scraper(ms_id: str, cell_id: str, cell_center: Tuple[float, float]):
     """
     Function to run the scraper command for a specific cell center.
     """
-    scraper_command = f"{PATH}/{SCRAPER_NAME} -depth {SCRAPER_DEPTH} -zoom {SCRAPER_ZOOM} " \
+    scraper_command = f"sudo {PATH}/{SCRAPER_NAME} -depth {SCRAPER_DEPTH} -zoom {SCRAPER_ZOOM} " \
+    f"-c 1 " \
     f"-geo {cell_center[0]},{cell_center[1]} " \
     f"-input {PATH}/{INPUT_NAME} " \
     f"-results {RESULTS_FOLDER}/{str(uuid.uuid4())}.csv " \

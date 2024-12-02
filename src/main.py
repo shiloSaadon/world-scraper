@@ -8,9 +8,9 @@ from dotenv import load_dotenv
 def init():
     load_dotenv() 
     # Clear the results folder
-    os.system(f'rm -rf {PATH}/results')
+    os.system(f'sudo rm -rf {PATH}/results')
     # Ensure that the results folder is there
-    os.system(f'mkdir {PATH}/results')
+    os.system(f'sudo mkdir {PATH}/results')
 
 def main():
     ms_id = str(uuid.uuid4())
