@@ -44,10 +44,4 @@ def scan_cells(ms_id: str, cell_centers: dict[str, Tuple[float, float]]):
     """
     Run all scraper commands in parallel using threading.
     """
-    results = []
-    with ThreadPoolExecutor() as executor:
-        futures = [executor.submit(run_scraper, ms_id, cell_id, cell_center) for cell_id, cell_center in cell_centers.items()]
-
-        for future in futures:
-            results.append(future.result())
-    return results
+    [run_scraper(ms_id=ms_id, cell_id=cell_id, cell_center=cell_center) for cell_id, cell_center in cell_centers.items()]

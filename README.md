@@ -2,9 +2,9 @@ Assuming:
 - Your terminal location is `~`
 - The `.pem` file is called `jenkins-test.pem` and is saved in the Downloads folder
 
-## Copy the source files to Jenkins:
+## Copy the source files as zip to Jenkins:
 ```
-scp -i "Downloads/jenkins-test.pem" ~/Documents/Projects/world-scraper ubuntu@ec2-3-82-112-24.compute-1.amazonaws.com:~
+scp -i "Downloads/jenkins-test.pem" ~/Documents/Projects/world-scraper.zip ubuntu@ec2-3-82-112-24.compute-1.amazonaws.com:~
 ```
 
 ## SSH into Jenkins:

@@ -2,14 +2,13 @@ pipeline {
     agent any
 
     parameters {
-        string(name: 'INSTANCE_COUNT', defaultValue: '6', description: 'Number of EC2 instances to deploy')
+        string(name: 'INSTANCE_COUNT', defaultValue: '1', description: 'Number of EC2 instances to deploy')
         string(name: 'REPO_URL', defaultValue: 'https://github.com/your/repo.git', description: 'Git repository URL')
-        string(name: 'SCRIPT_NAME', defaultValue: 'script.py', description: 'Python script to execute')
+        string(name: 'SCRIPT_NAME', defaultValue: 'start.sh', description: 'Bash script to install all dependencies and run the scraper')
         string(name: 'INSTANCE_TYPE', defaultValue: 't2.medium', description: 'EC2 Instance Type')
         string(name: 'INSTANCE_SECURITY_GROUP', defaultValue: 'sg-02ca8252d2971d420', description: 'EC2 Security Group')
         string(name: 'AMI_ID', defaultValue: 'ami-0866a3c8686eaeeba', description: 'Amazon Machine Image (AMI) ID')
         string(name: 'KEY_NAME', defaultValue: 'jenkins-test', description: 'Key pair for SSH access')
-        string(name: 'PEM_FILE_PATH', defaultValue: '/jenkins.pem', description: 'Path to the PEM file for SSH access')
     }
 
     stages {
@@ -77,7 +76,7 @@ pipeline {
                                 def sshStdOutput = sh(
                                     script:"""
                                     scp -o StrictHostKeyChecking=no -r ~/world-scraper ubuntu@${publicDnsName}:~/
-                                    ssh -o StrictHostKeyChecking=no ubuntu@${publicDnsName} "sudo sh ~/world-scraper/start.sh"
+                                    ssh -o StrictHostKeyChecking=no ubuntu@${publicDnsName} "sudo sh ~/world-scraper/${params.SCRIPT_NAME}"
                                     """,
                                     returnStdout: true
                                 )
@@ -89,15 +88,15 @@ pipeline {
                 }
             }
         }
-        stage('Terminate EC2 Instances') {
-            steps {
-                script {
-                    sh """
-                    aws ec2 terminate-instances --instance-ids ${env.INSTANCE_IDS} --query 'TerminatingInstances[*].InstanceId'
-                    """
-                    echo "Terminated all EC2 instances: ${env.INSTANCE_IDS}"
-                }
-            }
-        }
+        // stage('Terminate EC2 Instances') {
+        //     steps {
+        //         script {
+        //             sh """
+        //             aws ec2 terminate-instances --instance-ids ${env.INSTANCE_IDS} --query 'TerminatingInstances[*].InstanceId'
+        //             """
+        //             echo "Terminated all EC2 instances: ${env.INSTANCE_IDS}"
+        //         }
+        //     }
+        // }
     }
 }
