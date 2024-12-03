@@ -1,18 +1,26 @@
-from concurrent.futures import ThreadPoolExecutor, as_completed, wait
+from concurrent.futures import ThreadPoolExecutor
 import subprocess
 from typing import Tuple
-import uuid
 from const.general import INPUT_NAME, PATH, RESULTS_FOLDER, SCRAPER_NAME
 from const.google_map_scraper import SCRAPER_DEPTH, SCRAPER_ZOOM
-from server_connection import update_scraper_status
+from server_connection import save_scraped_locations, update_scraper_status
 
 def update_status(func):
     def inner1(*args, **kwargs):
-        update_scraper_status(ms_id=args[0], cell_id=args[1], status="scraping")
-        print('scraping')
-        func(*args, **kwargs)
-        print('done')
-        update_scraper_status(ms_id=args[0], cell_id=args[1], status="done")
+        try:
+            ms_id = args[0]
+            cell_id = args[1]
+            update_scraper_status(ms_id=ms_id, cell_id=cell_id, status="scraping")
+            print('scraping')
+            func(*args, **kwargs)
+            # Extract results and Send results to server
+            save_scraped_locations(cell_id=cell_id)
+            print('all saved')
+            update_scraper_status(ms_id=ms_id, cell_id=cell_id, status="done")
+            print('done')
+        except Exception as e:
+            update_scraper_status(ms_id=ms_id, cell_id=cell_id, status="error")
+            print(e)
     return inner1
 
 @update_status
@@ -24,11 +32,10 @@ def run_scraper(ms_id: str, cell_id: str, cell_center: Tuple[float, float]):
     f"-c 1 " \
     f"-geo {cell_center[0]},{cell_center[1]} " \
     f"-input {PATH}/{INPUT_NAME} " \
-    f"-results {RESULTS_FOLDER}/{str(uuid.uuid4())}.csv " \
+    f"-results {RESULTS_FOLDER}/{cell_id}.csv " \
     f"-exit-on-inactivity 10m"
 
     # Run the scraper
-    # os.system(scraper_command)
     process = subprocess.Popen(scraper_command, shell=True)
 
     process.wait()

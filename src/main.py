@@ -2,7 +2,7 @@ import os
 import uuid
 from const.general import PATH
 from scraper import scan_cells
-from server_connection import get_cell_centers, save_scraped_locations, update_scraper_status
+from server_connection import get_cell_centers
 from dotenv import load_dotenv
 
 def init():
@@ -18,13 +18,10 @@ def main():
     cell_centers = get_cell_centers(ms_id)
     print(cell_centers)
     
-    # Scan
+    # Scan and save locations
     scan_cells(ms_id, cell_centers)
-
     print('all done')
-    # Extract results and Send results to server
-    save_scraped_locations()
-    print('all saved')
+
     pass
 
 

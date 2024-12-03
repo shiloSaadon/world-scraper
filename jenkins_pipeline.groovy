@@ -2,7 +2,7 @@ pipeline {
     agent any
 
     parameters {
-        string(name: 'INSTANCE_COUNT', defaultValue: '1', description: 'Number of EC2 instances to deploy')
+        string(name: 'INSTANCE_COUNT', defaultValue: '6', description: 'Number of EC2 instances to deploy')
         string(name: 'REPO_URL', defaultValue: 'https://github.com/your/repo.git', description: 'Git repository URL')
         string(name: 'SCRIPT_NAME', defaultValue: 'script.py', description: 'Python script to execute')
         string(name: 'INSTANCE_TYPE', defaultValue: 't2.medium', description: 'EC2 Instance Type')

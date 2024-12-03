@@ -36,52 +36,44 @@ def get_cell_centers(ms_id: str) -> dict[str, Tuple[float, float]]:
             return {}
     
     except Exception as e:
+        print(f'Failed to fetch hexagons. Exception: {e}')
         return {}
     
-def save_scraped_locations():
-    
-    # Get all file names
-    filenames = os.listdir(RESULTS_FOLDER)
-    
-    # Filter only csv file names
-    csv_files = [ filename for filename in filenames if filename.endswith( ".csv" ) ]
-    
+def save_scraped_locations(cell_id: str):
     # Dict to hold all locations
     # using a dict ensures that we store unique locations
     all_locations = {}
     
-    # Loop over all csv files
-    for csv_path in csv_files:
-        # Get csv data
-        data = list(csv.DictReader(open(f'{RESULTS_FOLDER}/{csv_path}')))
-        if not data:
-            raise Exception(f'No data in {csv_path}')
+    # Get csv data
+    data = list(csv.DictReader(open(f'{RESULTS_FOLDER}/{cell_id}.csv')))
+    if not data:
+        raise Exception(f'No data in {RESULTS_FOLDER}/{cell_id}.csv')
 
-        # Loop over all locations
-        for row in data:
-            # Set id for compatibility with frontend
-            row['id'] = row['cid']
-            
-            # remove cid
-            del row['cid']
-            
-            # remove input_id as it is not required
-            del row['input_id']
+    # Loop over all locations
+    for row in data:
+        # Set id for compatibility with frontend
+        row['id'] = row['cid']
+        
+        # remove cid
+        del row['cid']
+        
+        # remove input_id as it is not required
+        del row['input_id']
 
-            # Convert all nested objects to valid json
-            row['menu'] = json.loads(row['menu'])
-            row['about'] = json.loads(row['about'])
-            row['owner'] = json.loads(row['owner'])
-            row['images'] = json.loads(row['images'])
-            row['open_hours'] = json.loads(row['open_hours'])
-            row['order_online'] = json.loads(row['order_online'])
-            row['user_reviews'] = json.loads(row['user_reviews'])
-            row['popular_times'] = json.loads(row['popular_times'])
-            row['complete_address'] = json.loads(row['complete_address'])
-            row['reviews_per_rating'] = json.loads(row['reviews_per_rating'])
-            
-            # Add data to all_locations
-            all_locations[row['id']] = row
+        # Convert all nested objects to valid json
+        row['menu'] = json.loads(row['menu'])
+        row['about'] = json.loads(row['about'])
+        row['owner'] = json.loads(row['owner'])
+        row['images'] = json.loads(row['images'])
+        row['open_hours'] = json.loads(row['open_hours'])
+        row['order_online'] = json.loads(row['order_online'])
+        row['user_reviews'] = json.loads(row['user_reviews'])
+        row['popular_times'] = json.loads(row['popular_times'])
+        row['complete_address'] = json.loads(row['complete_address'])
+        row['reviews_per_rating'] = json.loads(row['reviews_per_rating'])
+        
+        # Add data to all_locations
+        all_locations[row['id']] = row
     
     dataToBeUpserted = [{"type": "scraped_gmaps", "id_external": loc_id, "metadata": loc_data} for loc_id, loc_data in all_locations.items()]
 
@@ -92,23 +84,15 @@ def save_scraped_locations():
 
     spClient = create_client(os.environ['SUPABASE_PROJECT_URL'] , os.environ['SUPABASE_PROJECT_KEY'])
     # Upsert parsed locations with a conflict on id_external so same locations can be ignored
-    try:
-        spClient.from_('locations').upsert(
-            dataToBeUpserted, 
-            on_conflict="id_external"
-        ).execute()
-    except Exception as e:
-        # On exception, we ignore the csv so the process can continue and the microservice is not blocked
-        #! This behaviour may need to be discussed
-        print(e)
+    spClient.from_('locations').upsert(
+        dataToBeUpserted, 
+        on_conflict="id_external"
+    ).execute()
 
 
 def update_scraper_status(ms_id: str, cell_id: str, status: str):
-    try:
-        spClient = create_client(os.environ['SUPABASE_PROJECT_URL'] , os.environ['SUPABASE_PROJECT_KEY'])
-        spClient.schema('host_scraper').from_('logs').insert({"id_ms": ms_id, "id_cell": cell_id, "status": status}).execute()
-    except Exception as e:
-        print(e)
+    spClient = create_client(os.environ['SUPABASE_PROJECT_URL'] , os.environ['SUPABASE_PROJECT_KEY'])
+    spClient.schema('host_scraper').from_('logs').insert({"id_ms": ms_id, "id_cell": cell_id, "status": status}).execute()
 
 # initiated
 # scraping
