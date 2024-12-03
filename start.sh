@@ -22,4 +22,3 @@ cd world-scraper
 sudo chmod +x ./src/google_maps_scraper_linux
 
 sudo poetry install
-sudo poetry run python3 src/main.py
