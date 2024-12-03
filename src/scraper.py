@@ -7,9 +7,9 @@ from server_connection import save_scraped_locations, update_scraper_status
 
 def update_status(func):
     def inner1(*args, **kwargs):
+        ms_id = kwargs['ms_id']
+        cell_id = kwargs['cell_id']
         try:
-            ms_id = args[0]
-            cell_id = args[1]
             update_scraper_status(ms_id=ms_id, cell_id=cell_id, status="scraping")
             print('scraping')
             func(*args, **kwargs)
