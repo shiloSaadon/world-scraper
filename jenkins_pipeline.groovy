@@ -8,9 +8,26 @@ pipeline {
         string(name: 'INSTANCE_SECURITY_GROUP', defaultValue: 'sg-02ca8252d2971d420', description: 'EC2 Security Group')
         string(name: 'AMI_ID', defaultValue: 'ami-0866a3c8686eaeeba', description: 'Amazon Machine Image (AMI) ID')
         string(name: 'KEY_NAME', defaultValue: 'jenkins-test', description: 'Key pair for SSH access')
+        string(name: 'INPUT_QUERIES', defaultValue: 'bars,parks', description: 'Input queries for the scraper')
     }
 
     stages {
+        stage('Setup constant values') {
+            steps {
+                script {
+                    def inputQueries = params.INPUT_QUERIES.split(',')
+                        .collect { it.trim() }  // Trim whitespace
+                        .findAll { it }  // Remove empty strings
+                        .unique()  // Remove duplicates
+                    
+                    def queriesContent = inputQueries.join('\n')
+                    
+                    sh """
+                    echo "${queriesContent}" | sudo tee ~/world-scraper/src/input.txt > /dev/null
+                    """
+                }
+            }
+        }
         stage('Launch EC2 Instances') {
             steps {
                 script {

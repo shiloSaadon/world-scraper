@@ -5,7 +5,6 @@ from typing import Tuple
 import requests
 from supabase import create_client
 from const.general import RESULTS_FOLDER
-from const.h3 import AMOUNT_OF_HEXAGONS
 from const.server_data import ENDPOINT
 
 def get_cell_centers(ms_id: str) -> dict[str, Tuple[float, float]]:
@@ -15,11 +14,11 @@ def get_cell_centers(ms_id: str) -> dict[str, Tuple[float, float]]:
             "Authorization": f"Bearer {os.environ['HOST_SERVER_AUTH_KEY']}",
             "Content-Type": "application/json"
         }
-
+        
         # Define the query parameters
         PARAMS = {
             "ms_id": ms_id,
-            "amount_of_hexagons": AMOUNT_OF_HEXAGONS
+            "amount_of_hexagons": os.environ['HEXAGON_COUNT']
         }
 
         # Send he GET request
