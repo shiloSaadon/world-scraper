@@ -3,7 +3,7 @@ pipeline {
 
     parameters {
         string(name: 'INSTANCE_COUNT', defaultValue: '6', description: 'Number of EC2 instances to deploy')
-        string(name: 'SCRIPT_NAME', defaultValue: 'start.sh', description: 'Python script to execute')
+        string(name: 'HEXAGON_COUNT', defaultValue: '5', description: 'Number of hexagons to scan in each instance')
         string(name: 'INSTANCE_TYPE', defaultValue: 't2.medium', description: 'EC2 Instance Type')
         string(name: 'INSTANCE_SECURITY_GROUP', defaultValue: 'sg-02ca8252d2971d420', description: 'EC2 Security Group')
         string(name: 'AMI_ID', defaultValue: 'ami-0866a3c8686eaeeba', description: 'Amazon Machine Image (AMI) ID')
@@ -12,7 +12,17 @@ pipeline {
     }
 
     stages {
-        stage('Setup constant values') {
+        stage('Perform initial checks') {
+            steps {
+                script {
+                    sh """
+                    cd ~/world-scraper
+                    sudo bash checks.sh ${params.HEXAGON_COUNT}
+                    """
+                }
+            }
+        }
+        stage('Setup input queries') {
             steps {
                 script {
                     def inputQueries = params.INPUT_QUERIES.split(',')
@@ -92,7 +102,7 @@ pipeline {
                                 def sshStdOutput = sh(
                                     script:"""
                                     scp -o StrictHostKeyChecking=no -r ~/world-scraper ubuntu@${publicDnsName}:~/
-                                    ssh -o StrictHostKeyChecking=no ubuntu@${publicDnsName} "sudo sh ~/world-scraper/start.sh"
+                                    ssh -o StrictHostKeyChecking=no ubuntu@${publicDnsName} "sudo bash ~/world-scraper/start.sh"
                                     """,
                                     returnStdout: true
                                 )
