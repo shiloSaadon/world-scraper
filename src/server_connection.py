@@ -1,66 +1,48 @@
 import csv
 import json
 import os
-from typing import Tuple
-import requests
+from typing import Any
+import uuid
 from supabase import create_client
-from const.general import RESULTS_FOLDER
-from const.server_data import ENDPOINT
+import h3
+from const.general import QUERIES_COUNT, RESULTS_FOLDER
+from const.h3 import H3_RES
+from utils.utils import ScraperQuery
 
-def get_cell_centers(ms_id: str) -> dict[str, Tuple[float, float]]:
-    try:
-        # Define the request headers
-        HEADERS = {
-            "Authorization": f"Bearer {os.environ['HOST_SERVER_AUTH_KEY']}",
-            "Content-Type": "application/json"
-        }
-        
-        # Define the query parameters
-        PARAMS = {
-            "ms_id": ms_id,
-            "amount_of_hexagons": os.environ['HEXAGON_COUNT']
-        }
+def create_session(cell_id: str) -> str:
+    session_id = str(uuid.uuid4())
+    spClient = create_client(os.environ['SUPABASE_PROJECT_URL'] , os.environ['SUPABASE_PROJECT_KEY'])
+    spClient.schema('host_scraper').from_('sessions').insert({"id": session_id, "id_cell": cell_id}).execute()
+    return session_id
 
-        # Send he GET request
-        response = requests.get(f"{os.environ['HOST_SERVER_URL']}{ENDPOINT}", headers=HEADERS, params=PARAMS)
+def mark_session_as_scraping(session_id: str, queries: list[ScraperQuery]):
+    spClient = create_client(os.environ['SUPABASE_PROJECT_URL'] , os.environ['SUPABASE_PROJECT_KEY'])
+    spClient.schema('host_scraper').from_('sessions').update({"started_at": "now()"}).eq("id", session_id).execute()
+    spClient.schema('host_scraper').from_('session_queries').insert([{"id_session": session_id, "id_query": q.id} for q in queries]).execute()
 
-        # Handle the response
-        if response.status_code == 200:
-            # Successfully retrieved hexagons
-            return { id: (cell_center[0], cell_center[1]) for id, cell_center in response.json().get("hexagons").items() }
-        else:
-            # Print the error details
-            print(f"Failed to fetch hexagons. Status code: {response.status_code}")
-            print("Response:", response.json())
-            return {}
-    
-    except Exception as e:
-        print(f'Failed to fetch hexagons. Exception: {e}')
-        return {}
-    
-def save_scraped_locations(cell_id: str):
+def mark_session_as_done(session_id: str, remarks: str):
+    spClient = create_client(os.environ['SUPABASE_PROJECT_URL'] , os.environ['SUPABASE_PROJECT_KEY'])
+    spClient.schema('host_scraper').from_('sessions').update({"completed_at": "now()", "remarks": remarks}).eq("id", session_id).execute()
+
+def save_locations(session_id: str, cell_id: str):
     # Dict to hold all locations
     # using a dict ensures that we store unique locations
-    all_locations = {}
+    all_locations: dict[str, dict[str, Any]] = {}
     
     # Get csv data
     data = list(csv.DictReader(open(f'{RESULTS_FOLDER}/{cell_id}.csv')))
     if not data:
-        raise Exception(f'No data in {RESULTS_FOLDER}/{cell_id}.csv')
+        print(f'No data in {RESULTS_FOLDER}/{cell_id}.csv')
+        return
 
     # Loop over all locations
     for row in data:
-        # Set id for compatibility with frontend
-        row['id'] = row['cid']
-        
-        # remove cid
-        del row['cid']
-        
-        # remove input_id as it is not required
-        del row['input_id']
+        row['id_cell'] = h3.latlng_to_cell(float(row['latitude']), float(row['longitude']), H3_RES)
 
         # Convert all nested objects to valid json
         row['menu'] = json.loads(row['menu'])
+
+        #! Still need to handle cases when about is empty, null or not there
         row['about'] = json.loads(row['about'])
         row['owner'] = json.loads(row['owner'])
         row['images'] = json.loads(row['images'])
@@ -72,27 +54,38 @@ def save_scraped_locations(cell_id: str):
         row['reviews_per_rating'] = json.loads(row['reviews_per_rating'])
         
         # Add data to all_locations
-        all_locations[row['id']] = row
+        all_locations[row['cid']] = row
     
-    dataToBeUpserted = [{"type": "scraped_gmaps", "id_external": loc_id, "metadata": loc_data} for loc_id, loc_data in all_locations.items()]
+    dataToBeUpserted = [loc_data for _, loc_data in all_locations.items()]
 
     if not dataToBeUpserted:
         return
 
-    [print(d['metadata']['title']) for d in dataToBeUpserted]
-
     spClient = create_client(os.environ['SUPABASE_PROJECT_URL'] , os.environ['SUPABASE_PROJECT_KEY'])
-    # Upsert parsed locations with a conflict on id_external so same locations can be ignored
-    spClient.from_('locations').upsert(
-        dataToBeUpserted, 
-        on_conflict="id_external"
-    ).execute()
+    spClient.schema('host_scraper').rpc('ifn_scraper_locations_save', params={"p_id_session": session_id, "p_locations": dataToBeUpserted}).execute()
 
+    
+def get_scraper_hexagons() -> dict[str, tuple[float, float]] | None:
+    try:
+        spClient = create_client(os.environ['SUPABASE_PROJECT_URL'] , os.environ['SUPABASE_PROJECT_KEY'])
+        
+        hexRes = spClient.schema('host_scraper').rpc('ifn_scraper_cells_get', {"p_limit": os.environ['HEXAGON_COUNT']}).execute()
+        if len(hexRes.data) == 0:
+            raise Exception("No hexagons available")
+        
+        hexagons = { item['id']: h3.cell_to_latlng(item['id']) for item in hexRes.data }
+        
+        return {} if hexagons is None else {
+            k: tuple(v) if isinstance(v, list) else v 
+            for k, v in hexagons.items()
+        }
+    except Exception as e:
+        print(f'Failed to fetch hexagons. Exception: {e}')
+        return None
 
-def update_scraper_status(ms_id: str, cell_id: str, status: str):
+def get_scraper_queries(id_cell: str) -> list[ScraperQuery]:
     spClient = create_client(os.environ['SUPABASE_PROJECT_URL'] , os.environ['SUPABASE_PROJECT_KEY'])
-    spClient.schema('host_scraper').from_('logs').insert({"id_ms": ms_id, "id_cell": cell_id, "status": status}).execute()
-
-# initiated
-# scraping
-# done - error
+    
+    res = spClient.schema('host_scraper').rpc('ifn_scraper_queries_get', {"p_id_cell": id_cell, "p_limit": QUERIES_COUNT}).execute()
+    
+    return [ScraperQuery(id=item['id'], value=item['value']) for item in res.data]

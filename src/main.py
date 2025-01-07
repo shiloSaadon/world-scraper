@@ -1,8 +1,7 @@
 import os
-import uuid
 from const.general import PATH
 from scraper import scan_cells
-from server_connection import get_cell_centers
+from server_connection import get_scraper_hexagons
 from dotenv import load_dotenv
 
 def init():
@@ -13,13 +12,14 @@ def init():
     os.system(f'sudo mkdir {PATH}/results')
 
 def main():
-    ms_id = str(uuid.uuid4())
     # Get cell centers to scan
-    cell_centers = get_cell_centers(ms_id)
-    print(cell_centers)
+    cells = get_scraper_hexagons()
+    if not cells:
+        return
+    print(cells)
     
     # Scan and save locations
-    scan_cells(ms_id, cell_centers)
+    scan_cells(cells)
     print('all done')
 
     pass
