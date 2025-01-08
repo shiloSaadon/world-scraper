@@ -1,7 +1,7 @@
 # Current path where main.py
 PATH = "./src"
 #  The scraper binary code 
-SCRAPER_NAME = "google_maps_scraper_mac"
+SCRAPER_NAME = "google_maps_scraper"
 # File with queries to scrape
 INPUT_NAME = "input.txt"
 # Path for the results

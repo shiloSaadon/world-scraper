@@ -4,6 +4,7 @@ from typing import Tuple
 from const.general import INPUT_NAME, PATH, RESULTS_FOLDER, SCRAPER_NAME
 from const.google_map_scraper import SCRAPER_DEPTH, SCRAPER_ZOOM
 from server_connection import ScraperQuery, create_session, get_scraper_queries, mark_session_as_done, mark_session_as_scraping, save_locations
+from utils.utils import get_os
 
 # def update_status(func):
 #     def inner1(*args, **kwargs):
@@ -48,7 +49,7 @@ def run_scraper(cell_id: str, cell_center: Tuple[float, float]):
 
     mark_session_as_scraping(session_id=session_id, queries=queries)
     
-    scraper_command = f"sudo {PATH}/{SCRAPER_NAME} " \
+    scraper_command = f"sudo {PATH}/{SCRAPER_NAME}_{get_os()} " \
     f"-geo {cell_center[0]},{cell_center[1]} " \
     f"-radius 550 " \
     f"-zoom {SCRAPER_ZOOM} " \
