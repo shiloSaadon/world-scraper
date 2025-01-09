@@ -72,6 +72,8 @@ def get_scraper_hexagons() -> dict[str, tuple[float, float]] | None:
         hexRes = spClient.schema('host_scraper').rpc('ifn_scraper_cells_get', {"p_limit": os.environ['HEXAGON_COUNT']}).execute()
         if len(hexRes.data) == 0:
             raise Exception("No hexagons available")
+    
+        print(f'WorldScraper -> Fetched Cells to Process: {[item['id'] for item in hexRes.data]}')
         
         hexagons = { item['id']: h3.cell_to_latlng(item['id']) for item in hexRes.data }
         
@@ -79,6 +81,7 @@ def get_scraper_hexagons() -> dict[str, tuple[float, float]] | None:
             k: tuple(v) if isinstance(v, list) else v 
             for k, v in hexagons.items()
         }
+
     except Exception as e:
         print(f'Failed to fetch hexagons. Exception: {e}')
         return None
@@ -86,6 +89,7 @@ def get_scraper_hexagons() -> dict[str, tuple[float, float]] | None:
 def get_scraper_queries(id_cell: str) -> list[ScraperQuery]:
     spClient = create_client(os.environ['SUPABASE_PROJECT_URL'] , os.environ['SUPABASE_PROJECT_KEY'])
     
+    print(id_cell)
     res = spClient.schema('host_scraper').rpc('ifn_scraper_queries_get', {"p_id_cell": id_cell, "p_limit": QUERIES_COUNT}).execute()
     
     return [ScraperQuery(id=item['id'], value=item['value']) for item in res.data]

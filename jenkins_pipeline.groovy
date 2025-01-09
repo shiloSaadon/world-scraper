@@ -97,7 +97,10 @@ pipeline {
                 }
             }
         }
-        stage('Terminate EC2 Instances') {
+    }
+    // always attempt to cleanup the EC2 instances
+    post { 
+        always { 
             steps {
                 script {
                     sh """
