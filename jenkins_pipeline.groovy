@@ -101,13 +101,11 @@ pipeline {
     // always attempt to cleanup the EC2 instances
     post { 
         always { 
-            steps {
-                script {
-                    sh """
-                    aws ec2 terminate-instances --instance-ids ${env.INSTANCE_IDS} --query 'TerminatingInstances[*].InstanceId'
-                    """
-                    echo "Terminated all EC2 instances: ${env.INSTANCE_IDS}"
-                }
+            script {
+                sh """
+                aws ec2 terminate-instances --instance-ids ${env.INSTANCE_IDS} --query 'TerminatingInstances[*].InstanceId'
+                """
+                echo "Terminated all EC2 instances: ${env.INSTANCE_IDS}"
             }
         }
     }
