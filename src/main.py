@@ -16,7 +16,6 @@ def main():
     cells = get_scraper_hexagons()
     if not cells:
         return
-    print(cells)
     
     # Scan and save locations
     scan_cells(cells)

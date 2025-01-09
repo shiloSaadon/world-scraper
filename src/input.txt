@@ -1,3 +1,1 @@
-bar
-restaurant
-club
+pizza
