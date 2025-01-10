@@ -17,7 +17,7 @@ npx -v
 
 sudo npx --yes playwright install-deps
 
-cd world-scraper
+cd /tmp/world-scraper
 
 sudo chmod +x ./src/google_maps_scraper_linux
 
