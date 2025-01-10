@@ -23,10 +23,7 @@ from utils.utils import get_os
 #             print(e)
 #     return inner1
 
-def run_scraper(cell_id: str, cell_center: Tuple[float, float]):
-    session_id = create_session(cell_id=cell_id)
-    print(f'WorldScraper -> Session Created: {session_id}')
-
+def run_scraper(cell_id: str, cell_center: Tuple[float, float], session_id: str):
     queries: list[ScraperQuery]
     try:
         print(f'WorldScraper -> Fetching Queries')
@@ -81,4 +78,11 @@ def scan_cells(cells: dict[str, tuple[float, float]]):
     """
     Run all scraper commands in parallel using threading.
     """
-    [run_scraper(cell_id=cell_id, cell_center=cell_center) for cell_id, cell_center in cells.items()]
+
+    # cell_sessions store the cell information + the session id
+    cell_sessions: dict[str, tuple[tuple[float, float], str]] = {
+        cell_id: (center, create_session(cell_id=cell_id)) for cell_id, center in cells.items()
+    }
+
+    # run the
+    [run_scraper(cell_id=cell_id, cell_center=cell_info[0], session_id=cell_info[1]) for cell_id, cell_info in cell_sessions.items()]

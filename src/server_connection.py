@@ -13,6 +13,7 @@ def create_session(cell_id: str) -> str:
     session_id = str(uuid.uuid4())
     spClient = create_client(os.environ['SUPABASE_PROJECT_URL'] , os.environ['SUPABASE_PROJECT_KEY'])
     spClient.schema('host_scraper').from_('sessions').insert({"id": session_id, "id_cell": cell_id}).execute()
+    print(f'WorldScraper -> Created Session [{session_id}] for cell [{cell_id}]')
     return session_id
 
 def mark_session_as_scraping(session_id: str, queries: list[ScraperQuery]):
@@ -89,7 +90,6 @@ def get_scraper_hexagons() -> dict[str, tuple[float, float]] | None:
 def get_scraper_queries(id_cell: str) -> list[ScraperQuery]:
     spClient = create_client(os.environ['SUPABASE_PROJECT_URL'] , os.environ['SUPABASE_PROJECT_KEY'])
     
-    print(id_cell)
     res = spClient.schema('host_scraper').rpc('ifn_scraper_queries_get', {"p_id_cell": id_cell, "p_limit": QUERIES_COUNT}).execute()
     
     return [ScraperQuery(id=item['id'], value=item['value']) for item in res.data]
