@@ -84,7 +84,8 @@ pipeline {
                                 echo "SSHing into: ${publicDnsName}"
                                 def sshStdOutput = sh(
                                     script:"""
-                                    scp -o StrictHostKeyChecking=no -r ./ ubuntu@${publicDnsName}:~/
+                                    ssh -o StrictHostKeyChecking=no ubuntu@${publicDnsName} "sudo mkdir ~/world-scraper"
+                                    scp -o StrictHostKeyChecking=no -r ./ ubuntu@${publicDnsName}:~/world-scraper/
                                     ssh -o StrictHostKeyChecking=no ubuntu@${publicDnsName} "sudo bash ~/world-scraper/start.sh"
                                     """,
                                     returnStdout: true
