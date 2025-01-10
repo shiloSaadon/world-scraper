@@ -15,6 +15,7 @@ pipeline {
             steps {
                 script {
                     sh """
+                    cp ~/world-scraper/.env ./.env
                     sudo bash checks.sh ${params.HEXAGON_COUNT}
                     """
                 }
