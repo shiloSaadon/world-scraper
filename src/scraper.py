@@ -54,6 +54,7 @@ def run_scraper(cell_id: str, cell_center: Tuple[float, float], session_id: str)
     f"-results {RESULTS_FOLDER}/{cell_id}.csv " \
     f"-exit-on-inactivity 3m " \
     f"-limit " \
+    f"-c 2" \
     f"-resty-mode"
     print(f'WorldScraper -> Scraping session starting with command: {scraper_command}')
 
