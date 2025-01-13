@@ -19,7 +19,7 @@ sudo npx --yes playwright install-deps
 
 cd /tmp/world-scraper
 
-sudo chmod +x ./src/google_maps_scraper_linux
+sudo chmod +x ./src/go-scraper/google_maps_scraper_linux
 
 sudo poetry install
 sudo poetry run python3 src/main.py

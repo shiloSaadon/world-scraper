@@ -9,4 +9,4 @@ RESULTS_FOLDER = f'{PATH}/results'
 # The max amount of scrapping processes
 MAX_THREADS=10
 # The max number of queries for the scraper
-QUERIES_COUNT=500
+QUERIES_COUNT=10

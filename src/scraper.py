@@ -46,14 +46,15 @@ def run_scraper(cell_id: str, cell_center: Tuple[float, float], session_id: str)
 
     mark_session_as_scraping(session_id=session_id, queries=queries)
     
-    scraper_command = f"sudo {PATH}/{SCRAPER_NAME}_{get_os()} " \
+    scraper_command = f"sudo {PATH}/go-scraper/{SCRAPER_NAME}_{get_os()} " \
     f"-geo {cell_center[0]},{cell_center[1]} " \
     f"-radius 550 " \
     f"-zoom {SCRAPER_ZOOM} " \
     f"-input {PATH}/{INPUT_NAME} " \
     f"-results {RESULTS_FOLDER}/{cell_id}.csv " \
     f"-exit-on-inactivity 3m " \
-    f"-limit"
+    f"-limit " \
+    f"-resty-mode"
     print(f'WorldScraper -> Scraping session starting with command: {scraper_command}')
 
     # Run the scraper
