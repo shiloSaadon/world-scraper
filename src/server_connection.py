@@ -25,7 +25,7 @@ def mark_session_as_done(session_id: str, remarks: str):
     spClient = create_client(os.environ['SUPABASE_PROJECT_URL'] , os.environ['SUPABASE_PROJECT_KEY'])
     spClient.schema('host_scraper').from_('sessions').update({"completed_at": "now()", "remarks": remarks}).eq("id", session_id).execute()
 
-def save_locations(session_id: str, cell_id: str):
+def save_locations(session_id: str, cell_id: str, batch_number: int):
     # Dict to hold all locations
     # using a dict ensures that we store unique locations
     all_locations: dict[str, dict[str, Any]] = {}
@@ -63,7 +63,7 @@ def save_locations(session_id: str, cell_id: str):
         return
 
     spClient = create_client(os.environ['SUPABASE_PROJECT_URL'] , os.environ['SUPABASE_PROJECT_KEY'])
-    spClient.schema('host_scraper').rpc('ifn_scraper_locations_save', params={"p_id_session": session_id, "p_locations": dataToBeUpserted}).execute()
+    spClient.schema('host_scraper').rpc('ifn_scraper_locations_save', params={"p_id_session": session_id, "p_locations": dataToBeUpserted, "p_batch_number": batch_number}).execute()
 
     
 def get_scraper_hexagons() -> dict[str, tuple[float, float]] | None:
