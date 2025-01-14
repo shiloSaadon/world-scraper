@@ -1,8 +1,9 @@
 import subprocess
 import time
+import os
 from typing import Tuple
-from const.general import INPUT_NAME, PATH, RESULTS_FOLDER, SCRAPER_NAME
-from const.google_map_scraper import SCRAPER_DEPTH, SCRAPER_ZOOM
+from const.general import INPUT_NAME, PATH, RESULTS_FOLDER, SCRAPER_NAME, QUERIES_BATCH_COUNT
+from const.google_map_scraper import SCRAPER_ZOOM
 from server_connection import ScraperQuery, create_session, get_scraper_queries, mark_session_as_done, mark_session_as_scraping, save_locations
 from utils.utils import get_os
 
@@ -39,39 +40,43 @@ def run_scraper(cell_id: str, cell_center: Tuple[float, float], session_id: str)
         return
     
     print(f'WorldScraper -> Queries Fetched: {[q.value for q in queries]}')
-    
-    print(f'WorldScraper -> Setting up input queries in input.txt')
-    process = subprocess.Popen(f'echo "{"\n".join([q.value for q in queries])}" | sudo tee {PATH}/{INPUT_NAME} > /dev/null', shell=True)
-    process.wait()
 
     mark_session_as_scraping(session_id=session_id, queries=queries)
+
+    for i in range(0, len(queries), QUERIES_BATCH_COUNT):
+        batch = queries[i:i + QUERIES_BATCH_COUNT]
+        batch_value = [q.value for q in batch]
+
+        print(f'WorldScraper -> Scraping batch [{batch_value}]')
+        print(f'WorldScraper -> Setting up input queries in input.txt')
+        process = subprocess.Popen(f'echo "{"\n".join(batch_value)}" | sudo tee {PATH}/{INPUT_NAME} > /dev/null', shell=True)
+        process.wait()
     
-    scraper_command = f"sudo {PATH}/go-scraper/{SCRAPER_NAME}_{get_os()} " \
-    f"-geo {cell_center[0]},{cell_center[1]} " \
-    f"-radius 550 " \
-    f"-zoom {SCRAPER_ZOOM} " \
-    f"-input {PATH}/{INPUT_NAME} " \
-    f"-results {RESULTS_FOLDER}/{cell_id}.csv " \
-    f"-exit-on-inactivity 1m " \
-    f"-limit " \
-    f"-c 2 " \
-    f"-resty-mode"
-    print(f'WorldScraper -> Scraping session starting with command: {scraper_command}')
+        scraper_command = f"sudo {PATH}/go-scraper/{SCRAPER_NAME}_{get_os()} " \
+        f"-geo {cell_center[0]},{cell_center[1]} " \
+        f"-radius 550 " \
+        f"-zoom {SCRAPER_ZOOM} " \
+        f"-input {PATH}/{INPUT_NAME} " \
+        f"-results {RESULTS_FOLDER}/{cell_id}.csv " \
+        f"-exit-on-inactivity 1m " \
+        f"-limit " \
+        f"-resty-mode " \
+        f"-check-mode"
+        print(f'WorldScraper -> Scraping session starting with command: {scraper_command}')
 
-    # Run the scraper
-    process = subprocess.Popen(scraper_command, shell=True)
-    process.wait()
-    print(scraper_command)
-    time.sleep(5)
+        # Run the scraper
+        process = subprocess.Popen(scraper_command, shell=True)
+        process.wait()
+        print(scraper_command)
+        time.sleep(5)
 
-
-    try:
-        print(f'WorldScraper -> Saving locations')
-        save_locations(session_id=session_id, cell_id=cell_id)
-    except Exception as e:
-        print(f'WorldScraper -> Error while saving locations: {e}')
-        mark_session_as_done(session_id=session_id, remarks=f"Error: Failed to save locations: {e}")
-        return
+        try:
+            print(f'WorldScraper -> Saving locations')
+            save_locations(session_id=session_id, cell_id=cell_id)
+        except Exception as e:
+            print(f'WorldScraper -> Error while saving locations: {e}')
+            mark_session_as_done(session_id=session_id, remarks=f"Error: Failed to save locations: {e}")
+            return
     
     print(f'WorldScraper -> Scraper Done - Marking session as done')
     mark_session_as_done(session_id=session_id, remarks=f"Successfully scraped {cell_id}")
