@@ -5,7 +5,7 @@ pipeline {
         string(name: 'INSTANCE_COUNT', defaultValue: '6', description: 'Number of EC2 instances to deploy')
         string(name: 'INSTANCE_TYPE', defaultValue: 't2.large', description: 'EC2 Instance Type')
         string(name: 'INSTANCE_SECURITY_GROUP', defaultValue: 'sg-02ca8252d2971d420', description: 'EC2 Security Group')
-        string(name: 'AMI_ID', defaultValue: 'ami-0d6bfff3f27fe3625', description: 'Amazon Machine Image (AMI) ID')
+        string(name: 'AMI_ID', defaultValue: 'ami-0866a3c8686eaeeba', description: 'Amazon Machine Image (AMI) ID')
         string(name: 'KEY_NAME', defaultValue: 'jenkins-test', description: 'Key pair for SSH access')
         string(name: 'HEXAGON_COUNT', defaultValue: '5', description: 'Number of hexagons to scan in each instance')
         string(name: 'QUERIES_COUNT', defaultValue: '300', description: 'Number of queries in total to process')

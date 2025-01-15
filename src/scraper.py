@@ -46,6 +46,7 @@ def run_scraper(cell_id: str, cell_center: Tuple[float, float], session_id: str)
     for i in range(0, len(queries), QUERIES_BATCH_COUNT):
         batch = queries[i:i + QUERIES_BATCH_COUNT]
         batch_value = [q.value for q in batch]
+        batch_counter = i + 1
 
         print(f'WorldScraper -> Scraping batch [{batch_value}]')
         print(f'WorldScraper -> Setting up input queries in input.txt')
@@ -62,6 +63,7 @@ def run_scraper(cell_id: str, cell_center: Tuple[float, float], session_id: str)
         f"-limit " \
         f"-resty-mode " \
         f"-check-mode"
+        
         print(f'WorldScraper -> Scraping session starting with command: {scraper_command}')
 
         # Run the scraper
@@ -71,7 +73,7 @@ def run_scraper(cell_id: str, cell_center: Tuple[float, float], session_id: str)
 
         try:
             print(f'WorldScraper -> Saving locations')
-            save_locations(session_id=session_id, cell_id=cell_id, batch_number=i)
+            save_locations(session_id=session_id, cell_id=cell_id, batch_number=(batch_counter))
         except Exception as e:
             print(f'WorldScraper -> Error while saving locations: {e}')
             mark_session_as_done(session_id=session_id, remarks=f"Error: Failed to save locations: {e}")
