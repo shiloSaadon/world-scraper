@@ -1,3 +1,6 @@
+// unique identifier of the test
+def runID = UUID.randomUUID().toString()
+
 pipeline {
     agent any
 
@@ -88,7 +91,7 @@ pipeline {
                                     script:"""
                                     ssh -o StrictHostKeyChecking=no ubuntu@${publicDnsName} "mkdir /tmp/world-scraper"
                                     scp -o StrictHostKeyChecking=no -r ./ ubuntu@${publicDnsName}:/tmp/world-scraper/
-                                    ssh -o StrictHostKeyChecking=no ubuntu@${publicDnsName} "sudo INSTANCE_ID='${publicDnsName}' bash /tmp/world-scraper/start.sh"
+                                    ssh -o StrictHostKeyChecking=no ubuntu@${publicDnsName} "sudo INSTANCE_ID='${publicDnsName}' RUN_ID=${runID} bash /tmp/world-scraper/start.sh"
                                     """,
                                     returnStdout: true
                                 )

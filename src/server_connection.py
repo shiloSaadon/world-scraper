@@ -5,16 +5,20 @@ from typing import Any
 import uuid
 from supabase import create_client
 import h3
-from const.general import QUERIES_COUNT, RESULTS_FOLDER, INSTANCE_ID
+from const.general import config
 from const.h3 import H3_RES
 from utils.utils import ScraperQuery
 
 def create_session(cell_id: str) -> str:
-    session_id = str(uuid.uuid4())
-    spClient = create_client(os.environ['SUPABASE_PROJECT_URL'] , os.environ['SUPABASE_PROJECT_KEY'])
-    spClient.schema('host_scraper').from_('sessions').insert({"id": session_id, "id_cell": cell_id, "instance_id": INSTANCE_ID}).execute()
-    print(f'WorldScraper -> Created Session [{session_id}] for cell [{cell_id}] running on [{INSTANCE_ID}]')
-    return session_id
+    try:
+        session_id = str(uuid.uuid4())
+        spClient = create_client(os.environ['SUPABASE_PROJECT_URL'] , os.environ['SUPABASE_PROJECT_KEY'])
+        spClient.schema('host_scraper').from_('sessions').insert({"id": session_id, "id_cell": cell_id, "instance_id": config["INSTANCE_ID"], "run_id" : config["RUN_ID"]}).execute()
+        print(f'WorldScraper -> Created Session [{session_id}] for cell [{cell_id}] running on [{config["INSTANCE_ID"]}]')
+        return session_id
+    except Exception as e:
+        print(f'WorldScraper -> Failed to create session. Exception: {e}')
+        return None
 
 def mark_session_as_scraping(session_id: str, queries: list[ScraperQuery]):
     spClient = create_client(os.environ['SUPABASE_PROJECT_URL'] , os.environ['SUPABASE_PROJECT_KEY'])
@@ -31,9 +35,9 @@ def save_locations(session_id: str, cell_id: str, batch_number: int):
     all_locations: dict[str, dict[str, Any]] = {}
     
     # Get csv data
-    data = list(csv.DictReader(open(f'{RESULTS_FOLDER}/{cell_id}.csv')))
+    data = list(csv.DictReader(open(f'{config["RESULTS_FOLDER"]}/{cell_id}.csv')))
     if not data:
-        print(f'No data in {RESULTS_FOLDER}/{cell_id}.csv')
+        print(f'No data in {config["RESULTS_FOLDER"]}/{cell_id}.csv')
         return
 
     # Loop over all locations
@@ -70,7 +74,7 @@ def get_scraper_hexagons() -> dict[str, tuple[float, float]] | None:
     try:
         spClient = create_client(os.environ['SUPABASE_PROJECT_URL'] , os.environ['SUPABASE_PROJECT_KEY'])
         
-        hexRes = spClient.schema('host_scraper').rpc('ifn_scraper_cells_get', {"p_limit": os.environ['HEXAGON_COUNT']}).execute()
+        hexRes = spClient.schema('host_scraper').rpc('ifn_scraper_cells_get', {"p_limit": config["HEXAGON_COUNT"]}).execute()
         if len(hexRes.data) == 0:
             raise Exception("No hexagons available")
     
@@ -90,6 +94,6 @@ def get_scraper_hexagons() -> dict[str, tuple[float, float]] | None:
 def get_scraper_queries(id_cell: str) -> list[ScraperQuery]:
     spClient = create_client(os.environ['SUPABASE_PROJECT_URL'] , os.environ['SUPABASE_PROJECT_KEY'])
     
-    res = spClient.schema('host_scraper').rpc('ifn_scraper_queries_get', {"p_id_cell": id_cell, "p_limit": QUERIES_COUNT}).execute()
+    res = spClient.schema('host_scraper').rpc('ifn_scraper_queries_get', {"p_id_cell": id_cell, "p_limit": config["QUERIES_COUNT"]}).execute()
     
     return [ScraperQuery(id=item['id'], value=item['value']) for item in res.data]

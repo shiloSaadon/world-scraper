@@ -2,7 +2,7 @@ import subprocess
 import time
 import os
 from typing import Tuple
-from const.general import INPUT_NAME, PATH, RESULTS_FOLDER, SCRAPER_NAME, QUERIES_BATCH_COUNT
+from const.general import config
 from const.google_map_scraper import SCRAPER_ZOOM
 from server_connection import ScraperQuery, create_session, get_scraper_queries, mark_session_as_done, mark_session_as_scraping, save_locations
 from utils.utils import get_os
@@ -43,22 +43,22 @@ def run_scraper(cell_id: str, cell_center: Tuple[float, float], session_id: str)
 
     mark_session_as_scraping(session_id=session_id, queries=queries)
 
-    for i in range(0, len(queries), QUERIES_BATCH_COUNT):
-        batch = queries[i:i + QUERIES_BATCH_COUNT]
+    for i in range(0, len(queries), config["QUERIES_BATCH_COUNT"]):
+        batch = queries[i:i + config["QUERIES_BATCH_COUNT"]]
         batch_value = [q.value for q in batch]
         batch_counter = i + 1
 
         print(f'WorldScraper -> Scraping batch [{batch_value}]')
         print(f'WorldScraper -> Setting up input queries in input.txt')
-        process = subprocess.Popen(f'echo "{"\n".join(batch_value)}" | sudo tee {PATH}/{INPUT_NAME} > /dev/null', shell=True)
+        process = subprocess.Popen(f'echo "{"\n".join(batch_value)}" | sudo tee {config["PATH"]}/{config["INPUT_NAME"]} > /dev/null', shell=True)
         process.wait()
 
-        scraper_command = f"sudo {PATH}/go-scraper/{SCRAPER_NAME}_{get_os()} " \
+        scraper_command = f"sudo {config["PATH"]}/go-scraper/{config["SCRAPER_NAME"]}_{get_os()} " \
         f"-geo {cell_center[0]},{cell_center[1]} " \
         f"-radius 550 " \
         f"-zoom {SCRAPER_ZOOM} " \
-        f"-input {PATH}/{INPUT_NAME} " \
-        f"-results {RESULTS_FOLDER}/{cell_id}.csv " \
+        f"-input {config["PATH"]}/{config["INPUT_NAME"]} " \
+        f"-results {config["RESULTS_FOLDER"]}/{cell_id}.csv " \
         f"-exit-on-inactivity 1m " \
         f"-limit " \
         f"-resty-mode " \
@@ -88,9 +88,13 @@ def scan_cells(cells: dict[str, tuple[float, float]]):
     """
 
     # cell_sessions store the cell information + the session id
-    cell_sessions: dict[str, tuple[tuple[float, float], str]] = {
-        cell_id: (center, create_session(cell_id=cell_id)) for cell_id, center in cells.items()
-    }
+    cell_sessions: dict[str, tuple[tuple[float, float], str]] = {}
+    for k, center in cells.items():
+        session = create_session(cell_id=k)
+        if session is not None:
+            cell_sessions[k] = (center, session)
+        else:
+            print(f'WorldScraper -> Skipping session for cell_id [{k}]')
 
     # run the
     [run_scraper(cell_id=cell_id, cell_center=cell_info[0], session_id=cell_info[1]) for cell_id, cell_info in cell_sessions.items()]

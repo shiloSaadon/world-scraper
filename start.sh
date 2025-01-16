@@ -23,6 +23,7 @@ sudo chmod +x ./src/go-scraper/google_maps_scraper_linux
 
 # passed from the jenkins file
 echo "INSTANCE_ID=$INSTANCE_ID" >> .env
+echo "RUN_ID=$RUN_ID" >> .env
 
 sudo poetry install
 sudo poetry run python3 src/main.py
