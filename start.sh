@@ -1,7 +1,6 @@
 #!/bin/bash
 
 export DEBIAN_FRONTEND=noninteractive
-echo "Instance_ID: "$INSTANCE_ID
 
 sudo -E apt-get update
 sudo -E apt-get install -y \
@@ -21,6 +20,9 @@ sudo npx --yes playwright install-deps
 cd /tmp/world-scraper
 
 sudo chmod +x ./src/go-scraper/google_maps_scraper_linux
+
+# passed from the jenkins file
+echo "INSTANCE_ID=$INSTANCE_ID" >> .env
 
 sudo poetry install
 sudo poetry run python3 src/main.py
