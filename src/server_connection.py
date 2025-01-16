@@ -5,15 +5,15 @@ from typing import Any
 import uuid
 from supabase import create_client
 import h3
-from const.general import QUERIES_COUNT, RESULTS_FOLDER
+from const.general import QUERIES_COUNT, RESULTS_FOLDER, INSTANCE_ID
 from const.h3 import H3_RES
 from utils.utils import ScraperQuery
 
 def create_session(cell_id: str) -> str:
     session_id = str(uuid.uuid4())
     spClient = create_client(os.environ['SUPABASE_PROJECT_URL'] , os.environ['SUPABASE_PROJECT_KEY'])
-    spClient.schema('host_scraper').from_('sessions').insert({"id": session_id, "id_cell": cell_id}).execute()
-    print(f'WorldScraper -> Created Session [{session_id}] for cell [{cell_id}]')
+    spClient.schema('host_scraper').from_('sessions').insert({"id": session_id, "id_cell": cell_id, "instance_id": INSTANCE_ID}).execute()
+    print(f'WorldScraper -> Created Session [{session_id}] for cell [{cell_id}] running on [{INSTANCE_ID}]')
     return session_id
 
 def mark_session_as_scraping(session_id: str, queries: list[ScraperQuery]):

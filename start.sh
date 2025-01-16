@@ -1,6 +1,7 @@
 #!/bin/bash
 
 export DEBIAN_FRONTEND=noninteractive
+echo "Instance_ID: "$INSTANCE_ID
 
 sudo -E apt-get update
 sudo -E apt-get install -y \

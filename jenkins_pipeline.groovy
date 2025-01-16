@@ -88,7 +88,7 @@ pipeline {
                                     script:"""
                                     ssh -o StrictHostKeyChecking=no ubuntu@${publicDnsName} "mkdir /tmp/world-scraper"
                                     scp -o StrictHostKeyChecking=no -r ./ ubuntu@${publicDnsName}:/tmp/world-scraper/
-                                    ssh -o StrictHostKeyChecking=no ubuntu@${publicDnsName} "sudo bash /tmp/world-scraper/start.sh"
+                                    ssh -o StrictHostKeyChecking=no ubuntu@${publicDnsName} "sudo INSTANCE_ID='${publicDnsName}' bash /tmp/world-scraper/start.sh"
                                     """,
                                     returnStdout: true
                                 )

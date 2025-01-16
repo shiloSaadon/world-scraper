@@ -14,3 +14,5 @@ MAX_THREADS=10
 QUERIES_COUNT = int(os.getenv("QUERIES_COUNT") if os.getenv("QUERIES_COUNT") else 300)
 # Process and upload in batches
 QUERIES_BATCH_COUNT = int(os.getenv("QUERIES_BATCH_COUNT") if os.getenv("QUERIES_BATCH_COUNT") else 25)
+# instance running the test
+INSTANCE_ID = os.getenv("INSTANCE_ID") if os.getenv("INSTANCE_ID") else "localhost"
