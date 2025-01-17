@@ -9,15 +9,17 @@ from const.general import config
 from const.h3 import H3_RES
 from utils.utils import ScraperQuery
 
+INSTANCE_ID = config["INSTANCE_ID"]
+
 def create_session(cell_id: str) -> str:
     try:
         session_id = str(uuid.uuid4())
         spClient = create_client(os.environ['SUPABASE_PROJECT_URL'] , os.environ['SUPABASE_PROJECT_KEY'])
         spClient.schema('host_scraper').from_('sessions').insert({"id": session_id, "id_cell": cell_id, "instance_id": config["INSTANCE_ID"], "run_id" : config["RUN_ID"]}).execute()
-        print(f'WorldScraper -> Created Session [{session_id}] for cell [{cell_id}] running on [{config["INSTANCE_ID"]}]')
+        print(f'WorldScraper[{INSTANCE_ID}] -> Created Session [{session_id}] for cell [{cell_id}] running on [{config["INSTANCE_ID"]}]')
         return session_id
     except Exception as e:
-        print(f'WorldScraper -> Failed to create session. Exception: {e}')
+        print(f'WorldScraper[{INSTANCE_ID}] -> Failed to create session. Exception: {e}')
         return None
 
 def mark_session_as_scraping(session_id: str, queries: list[ScraperQuery]):
@@ -78,7 +80,7 @@ def get_scraper_hexagons() -> dict[str, tuple[float, float]] | None:
         if len(hexRes.data) == 0:
             raise Exception("No hexagons available")
     
-        print(f'WorldScraper -> Fetched Cells to Process: {[item['id'] for item in hexRes.data]}')
+        print(f'WorldScraper[{INSTANCE_ID}] -> Fetched Cells to Process: {[item['id'] for item in hexRes.data]}')
         
         hexagons = { item['id']: h3.cell_to_latlng(item['id']) for item in hexRes.data }
         
