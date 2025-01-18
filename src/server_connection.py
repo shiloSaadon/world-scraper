@@ -59,6 +59,10 @@ def save_locations(session_id: str, cell_id: str, batch_number: int):
         row['popular_times'] = json.loads(row['popular_times'])
         row['complete_address'] = json.loads(row['complete_address'])
         row['reviews_per_rating'] = json.loads(row['reviews_per_rating'])
+
+        # query information comes as input_id from the file
+        # but the db eexpectes query_value
+        row['query_value'] = row['input_id']
         
         # Add data to all_locations
         all_locations[row['cid']] = row
