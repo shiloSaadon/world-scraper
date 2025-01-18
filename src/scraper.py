@@ -3,7 +3,7 @@ import time
 import os
 from typing import Tuple
 from const.general import config
-from const.google_map_scraper import SCRAPER_ZOOM
+from const.google_map_scraper import SCRAPER_ZOOM, SCRAPER_DEPTH, SCRAPER_RADIUS, INACTIVITY_TIMEOUT
 from server_connection import ScraperQuery, create_session, get_scraper_queries, mark_session_as_done, mark_session_as_scraping, save_locations
 from utils.utils import get_os
 
@@ -57,11 +57,12 @@ def run_scraper(cell_id: str, cell_center: Tuple[float, float], session_id: str)
 
         scraper_command = f"sudo {config["PATH"]}/go-scraper/{config["SCRAPER_NAME"]}_{get_os()} " \
         f"-geo {cell_center[0]},{cell_center[1]} " \
-        f"-radius 550 " \
+        f"-radius {SCRAPER_RADIUS} " \
+        f"-depth {SCRAPER_DEPTH} " \
         f"-zoom {SCRAPER_ZOOM} " \
+        f"-exit-on-inactivity {INACTIVITY_TIMEOUT} " \
         f"-input {config["PATH"]}/{config["INPUT_NAME"]} " \
         f"-results {config["RESULTS_FOLDER"]}/{cell_id}.csv " \
-        f"-exit-on-inactivity 1m " \
         f"-limit " \
         f"-resty-mode " \
         f"-check-mode"
