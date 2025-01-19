@@ -61,8 +61,15 @@ def save_locations(session_id: str, cell_id: str, batch_number: int):
         row['reviews_per_rating'] = json.loads(row['reviews_per_rating'])
 
         # query information comes as input_id from the file
-        # but the db eexpectes query_value
-        row['query_value'] = row['input_id']
+        # but the db expectes query_value
+        # append multiple labels from previous runs
+        queries = []
+        if row['cid'] in all_locations:
+            previous_entry = all_locations[row['cid']]
+            queries = previous_entry['query_values']
+        
+        queries.append(row['input_id'])
+        row['query_values'] = queries
         
         # Add data to all_locations
         all_locations[row['cid']] = row
